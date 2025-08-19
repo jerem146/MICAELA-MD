@@ -1,22 +1,28 @@
 import { exec } from 'child_process';
+import path from 'path';
 
 let handler = async (m, { conn }) => {
-  m.reply(`${emoji2} Actualizando el bot...`);
+  const botPath = path.resolve('./'); // Carpeta donde está tu bot
+  await conn.sendMessage(m.chat, '🔄 Actualizando el bot...', { quoted: m });
 
-  exec('git pull', (err, stdout, stderr) => {
+  exec('git pull', { cwd: botPath }, (err, stdout, stderr) => {
     if (err) {
-      conn.reply(m.chat, `${msm} Error: No se pudo realizar la actualización.\nRazón: ${err.message}`, m);
+      conn.sendMessage(
+        m.chat,
+        `❌ Error: No se pudo actualizar el bot.\nRazón: ${err.message}`,
+        { quoted: m }
+      );
       return;
     }
 
-    if (stderr) {
-      console.warn('Advertencia durante la actualización:', stderr);
-    }
+    if (stderr) console.warn('Advertencia durante la actualización:', stderr);
+
+    const output = stdout.length > 1000 ? stdout.slice(0, 1000) + '...\n[Salida truncada]' : stdout;
 
     if (stdout.includes('Already up to date.')) {
-      conn.reply(m.chat, `${emoji4} El bot ya está actualizado.`, m);
+      conn.sendMessage(m.chat, '✅ El bot ya está actualizado.', { quoted: m });
     } else {
-      conn.reply(m.chat, `${emoji} Actualización realizada con éxito.\n\n${stdout}`, m);
+      conn.sendMessage(m.chat, `✅ Actualización realizada con éxito.\n\n${output}`, { quoted: m });
     }
   });
 };
